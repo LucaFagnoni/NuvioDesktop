@@ -188,6 +188,11 @@ tasks.withType<KotlinCompilationTask<*>>().configureEach {
 }
 
 kotlin {
+    jvm("desktop") {
+        compilerOptions {
+            jvmTarget.set(JvmTarget.JVM_17)
+        }
+    }
     androidTarget {
         compilerOptions {
             jvmTarget.set(JvmTarget.JVM_11)
@@ -229,6 +234,18 @@ kotlin {
     }
     
     sourceSets {
+        val desktopMain by getting {
+            kotlin.srcDir("src/fullCommonMain/kotlin")
+            dependencies {
+                implementation(compose.desktop.currentOs)
+                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-swing:1.8.1")
+                implementation("com.squareup.okhttp3:okhttp:4.12.0")
+                implementation("io.ktor:ktor-client-okhttp:3.4.1")
+                implementation("uk.co.caprica:vlcj:4.8.3")
+                implementation(libs.quickjs.kt)
+                implementation(libs.ksoup)
+            }
+        }
         val commonMain by getting {
             kotlin.srcDir(generatedRuntimeConfigDir)
         }
@@ -369,5 +386,48 @@ android {
         isCoreLibraryDesugaringEnabled = true
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
+    }
+}
+
+compose.desktop {
+    application {
+        mainClass = "com.nuvio.app.MainKt"
+
+        // Use system JDK 25 for packaging (jpackage WiX v5 support requires JDK 24+)
+        javaHome = providers.environmentVariable("JAVA_HOME")
+            .orElse("D:\\Programmi\\Eclipse Adoptium\\jdk-25.0.1.8-hotspot")
+            .get()
+
+        jvmArgs += listOf(
+            "-Xmx2g",
+            "-Dfile.encoding=UTF-8",
+        )
+
+        nativeDistributions {
+            targetFormats(TargetFormat.Msi)
+            packageName = "Nuvio"
+            packageVersion = "1.0.0"
+            description = "Nuvio — Stream, Track & Discover"
+            vendor = "Nuvio"
+            copyright = "© 2025 Nuvio"
+
+            windows {
+                menuGroup = "Nuvio"
+                shortcut = true
+                dirChooser = true
+                perUserInstall = true
+                upgradeUuid = "b2f4e8c1-7a3d-4e5f-9b1c-d8e2f6a4c3b0"
+                iconFile.set(project.file("src/desktopMain/resources/icon.ico"))
+            }
+
+            // Shared JDK modules needed at runtime
+            modules("java.sql", "java.naming", "jdk.unsupported")
+        }
+
+        buildTypes.release {
+            proguard {
+                isEnabled = false
+            }
+        }
     }
 }

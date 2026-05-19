@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeContent
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -29,6 +30,9 @@ import androidx.compose.material.icons.rounded.Replay10
 import androidx.compose.material.icons.rounded.Speed
 import androidx.compose.material.icons.rounded.SwapHoriz
 import androidx.compose.material.icons.rounded.VideoLibrary
+import androidx.compose.material.icons.rounded.VolumeDown
+import androidx.compose.material.icons.rounded.VolumeMute
+import androidx.compose.material.icons.rounded.VolumeUp
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -37,6 +41,10 @@ import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -84,6 +92,7 @@ internal fun PlayerControlsShell(
     onScrubChange: (Long) -> Unit,
     onScrubFinished: (Long) -> Unit,
     horizontalSafePadding: androidx.compose.ui.unit.Dp,
+    playerController: PlayerEngineController? = null,
     modifier: Modifier = Modifier,
 ) {
     Box(modifier = modifier.fillMaxSize()) {
@@ -169,6 +178,7 @@ internal fun PlayerControlsShell(
                 onAudioClick = onAudioClick,
                 onSourcesClick = onSourcesClick,
                 onEpisodesClick = onEpisodesClick,
+                playerController = playerController,
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
                     .fillMaxWidth()
@@ -434,6 +444,7 @@ private fun ProgressControls(
     onAudioClick: () -> Unit,
     onSourcesClick: (() -> Unit)? = null,
     onEpisodesClick: (() -> Unit)? = null,
+    playerController: PlayerEngineController? = null,
     modifier: Modifier = Modifier,
 ) {
     val durationMs = playbackSnapshot.durationMs.coerceAtLeast(1L)
@@ -514,6 +525,10 @@ private fun ProgressControls(
                             icon = Icons.Rounded.VideoLibrary,
                             onClick = onEpisodesClick,
                         )
+                    }
+                    // Volume control — visible only on platforms that support it
+                    if (playerController != null && playerController.supportsVolume()) {
+                        PlayerVolumeControl(controller = playerController)
                     }
                 }
             }
@@ -681,6 +696,58 @@ private fun PlayerActionPillButton(
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
             softWrap = false,
+        )
+    }
+}
+
+@Composable
+private fun PlayerVolumeControl(
+    controller: PlayerEngineController,
+) {
+    var volume by remember { mutableFloatStateOf(controller.getVolume().toFloat()) }
+    val volumeIcon = when {
+        volume <= 0f -> Icons.Rounded.VolumeMute
+        volume < 50f -> Icons.Rounded.VolumeDown
+        else -> Icons.Rounded.VolumeUp
+    }
+    val volumeSliderColors = SliderDefaults.colors(
+        thumbColor = Color.White,
+        activeTrackColor = Color.White,
+        inactiveTrackColor = Color.White.copy(alpha = 0.3f),
+    )
+
+    Row(
+        modifier = Modifier
+            .clip(RoundedCornerShape(22.dp))
+            .padding(horizontal = 8.dp, vertical = 6.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
+    ) {
+        Icon(
+            imageVector = volumeIcon,
+            contentDescription = "Volume",
+            tint = Color.White,
+            modifier = Modifier
+                .size(18.dp)
+                .clickable {
+                    if (volume > 0f) {
+                        volume = 0f
+                        controller.setVolume(0)
+                    } else {
+                        volume = 100f
+                        controller.setVolume(100)
+                    }
+                },
+        )
+        Slider(
+            value = volume,
+            onValueChange = {
+                volume = it
+                controller.setVolume(it.toInt())
+            },
+            valueRange = 0f..150f,
+            modifier = Modifier.width(100.dp).height(20.dp),
+            colors = volumeSliderColors,
         )
     }
 }

@@ -1639,6 +1639,7 @@ fun PlayerScreen(
                         playerController?.seekTo(positionMs)
                     },
                     horizontalSafePadding = horizontalSafePadding,
+                    playerController = playerController,
                     modifier = Modifier.fillMaxSize(),
                 )
             }

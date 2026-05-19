@@ -1,6 +1,7 @@
 *.iml
 .kotlin
 .gradle
+jdk-*/
 **/build/
 !composeApp/src/**/kotlin/com/nuvio/app/core/build/
 !composeApp/src/**/kotlin/com/nuvio/app/core/build/**
@@ -27,3 +28,24 @@ asset
 scripts/scrape_android_compose_animation_docs.py
 tools
 AGENTS.md
+
+# Desktop distribution artifacts
+composeApp/build/compose/
+*.msi
+*.exe
+*.dmg
+*.deb
+*.rpm
+
+# Desktop VLC native bundle (if bundled locally)
+vlc-native/
+
+# Generated runtime configs (contain API keys)
+composeApp/build/generated/
+
+# OS / Editor artifacts
+Thumbs.db
+Desktop.ini
+*.swp
+*.swo
+*~

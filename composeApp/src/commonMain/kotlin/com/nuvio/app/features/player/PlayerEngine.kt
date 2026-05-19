@@ -18,6 +18,9 @@ interface PlayerEngineController {
     fun clearExternalSubtitle()
     fun clearExternalSubtitleAndSelect(trackIndex: Int)
     fun applySubtitleStyle(style: SubtitleStyleState) {}
+    fun getVolume(): Int = 100
+    fun setVolume(percent: Int) {}
+    fun supportsVolume(): Boolean = false
 }
 
 internal fun sanitizePlaybackHeaders(headers: Map<String, String>?): Map<String, String> {
